@@ -7,15 +7,15 @@ cwd = GetCurrentDir()
 # The set of source files associated with this SConscript file.
 
 src = Glob('GD32F10x_standard_peripheral/Source/*.c')
-src += [cwd + '/CMSIS/GD/GD32F30x/Source/system_gd32f10x.c']
+src += [cwd + '/CMSIS/GD/GD32F10x/Source/system_gd32f10x.c']
 
 #add for startup script
 if rtconfig.CROSS_TOOL == 'gcc':
-    src += [cwd + '/CMSIS/GD/GD32F10x/Source/GCC/startup_gd32f10x_hd.s']
+    src += [cwd + '/CMSIS/GD/GD32F10x/Source/GCC/startup_gd32f10x_cl.s']
 elif rtconfig.CROSS_TOOL == 'keil':
-    src += [cwd + '/CMSIS/GD/GD32F10x/Source/ARM/startup_gd32f10x_hd.s']
+    src += [cwd + '/CMSIS/GD/GD32F10x/Source/ARM/startup_gd32f10x_cl.s']
 elif rtconfig.CROSS_TOOL == 'iar':
-    src += [cwd + '/CMSIS/GD/GD32F10x/Source/IAR/startup_gd32f10x_hd.s']
+    src += [cwd + '/CMSIS/GD/GD32F10x/Source/IAR/startup_gd32f10x_cl.s']
 
 path = [
     cwd + '/CMSIS/GD/GD32F10x/Include',
