@@ -14,9 +14,19 @@
 #include <rtthread.h>
 #include <board.h>
 
+#include <drivers/pin.h>
+
 int main(void)
 {
     /* user app entry */
+		rt_pin_mode(37, PIN_MODE_OUTPUT);
+		while(1)
+		{
+			rt_pin_write(37, PIN_HIGH);
+			rt_thread_delay(500);
+			rt_pin_write(37, PIN_LOW);
+			rt_thread_delay(500);
+		}
 
     return 0;
 }

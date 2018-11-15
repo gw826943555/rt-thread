@@ -134,13 +134,23 @@ void UART4_IRQHandler(void)
 static const struct gd32_uart uarts[] = {
     #ifdef RT_USING_USART0
     {
+			#ifdef RT_USING_USART0_REMAP
         USART0,                                 // uart peripheral index
+        USART0_IRQn,                            // uart iqrn
+        RCU_USART0, RCU_GPIOB, RCU_GPIOB,       // periph clock, tx gpio clock, rt gpio clock
+        GPIOB, GPIO_PIN_6,                      // tx port, tx pin
+        GPIOB, GPIO_PIN_7,                     	// rx port, rx pin
+        &serial0,
+        "uart0",
+			#else
+				USART0,                                 // uart peripheral index
         USART0_IRQn,                            // uart iqrn
         RCU_USART0, RCU_GPIOA, RCU_GPIOA,       // periph clock, tx gpio clock, rt gpio clock
         GPIOA, GPIO_PIN_9,                      // tx port, tx pin
         GPIOA, GPIO_PIN_10,                     // rx port, rx pin
         &serial0,
         "uart0",
+			#endif
     },
     #endif
     
@@ -215,6 +225,11 @@ void gd32_uart_gpio_init(struct gd32_uart *uart)
 
     /* connect port to USARTx_Rx */
     gpio_init(uart->rx_port, GPIO_MODE_IN_FLOATING, GPIO_OSPEED_50MHZ, uart->rx_pin);
+	
+	#ifdef RT_USING_USART0_REMAP
+		rcu_periph_clock_enable(RCU_AF);
+		gpio_pin_remap_config(GPIO_USART0_REMAP, ENABLE);
+	#endif
 
     NVIC_SetPriority(uart->irqn, 0);
     NVIC_EnableIRQ(uart->irqn);
