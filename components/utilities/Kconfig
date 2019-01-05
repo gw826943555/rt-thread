@@ -225,9 +225,13 @@ config RT_USING_ULOG
             
         config ULOG_SW_VERSION_NUM
             hex
-            default 0x00100
+            default 0x00101
             help
                 sfotware module version number
     endif
+
+config RT_USING_UTEST
+    bool "Enable utest (RT-Thread test framework)"
+    default n
 
 endmenu

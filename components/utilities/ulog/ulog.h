@@ -18,7 +18,7 @@
 extern "C" {
 #endif
 
-#define ULOG_VERSION_STR               "0.1.0"
+#define ULOG_VERSION_STR               "0.1.1"
 
 /*
  * ulog init and deint
@@ -45,6 +45,7 @@ void ulog_deinit(void);
 #define LOG_I(...)                     ulog_i(LOG_TAG, __VA_ARGS__)
 #define LOG_D(...)                     ulog_d(LOG_TAG, __VA_ARGS__)
 #define LOG_RAW(...)                   ulog_raw(__VA_ARGS__)
+#define LOG_HEX(name, width, buf, size)      ulog_hex(name, width, buf, size)
 
 /*
  * backend register and unregister
@@ -58,9 +59,13 @@ rt_err_t ulog_backend_unregister(ulog_backend_t backend);
  */
 int ulog_tag_lvl_filter_set(const char *tag, rt_uint32_t level);
 rt_uint32_t ulog_tag_lvl_filter_get(const char *tag);
+rt_slist_t *ulog_tag_lvl_list_get(void);
 void ulog_global_filter_lvl_set(rt_uint32_t level);
+rt_uint32_t ulog_global_filter_lvl_get(void);
 void ulog_global_filter_tag_set(const char *tag);
+const char *ulog_global_filter_tag_get(void);
 void ulog_global_filter_kw_set(const char *keyword);
+const char *ulog_global_filter_kw_get(void);
 #endif /* ULOG_USING_FILTER */
 
 /*
@@ -79,7 +84,7 @@ void ulog_async_waiting_log(rt_int32_t time);
 /*
  * dump the hex format data to log
  */
-void ulog_hexdump(const char *name, rt_size_t width, rt_uint8_t *buf, rt_size_t size);
+void ulog_hexdump(const char *tag, rt_size_t width, rt_uint8_t *buf, rt_size_t size);
 
 /*
  * Another log output API. This API is more difficult to use than LOG_X API.

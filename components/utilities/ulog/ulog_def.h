@@ -94,6 +94,12 @@ extern "C" {
     #define ulog_e(TAG, ...)
 #endif /* (LOG_LVL >= LOG_LVL_ERROR) && (ULOG_OUTPUT_LVL >= LOG_LVL_ERROR) */
 
+#if (LOG_LVL >= LOG_LVL_DBG) && (ULOG_OUTPUT_LVL >= LOG_LVL_DBG)
+    #define ulog_hex(TAG, width, buf, size)     ulog_hexdump(TAG, width, buf, size)
+#else
+    #define ulog_hex(TAG, width, buf, size)
+#endif /* (LOG_LVL >= LOG_LVL_DBG) && (ULOG_OUTPUT_LVL >= LOG_LVL_DBG) */    
+    
 /* assert for developer. */
 #ifdef ULOG_ASSERT_ENABLE
     #define ULOG_ASSERT(EXPR)                                                 \
@@ -132,6 +138,7 @@ extern "C" {
 #define log_d                          LOG_D
 #define log_v                          LOG_D
 #define log_raw                        LOG_RAW
+#define log_hex                        LOG_HEX    
 #define ELOG_LVL_ASSERT                LOG_LVL_ASSERT
 #define ELOG_LVL_ERROR                 LOG_LVL_ERROR
 #define ELOG_LVL_WARN                  LOG_LVL_WARNING
@@ -164,6 +171,15 @@ extern "C" {
 #endif
 
 #define ULOG_FRAME_MAGIC               0x10
+
+/* tag's level filter */
+struct ulog_tag_lvl_filter
+{
+    char tag[ULOG_FILTER_TAG_MAX_LEN + 1];
+    rt_uint32_t level;
+    rt_slist_t list;
+};
+typedef struct ulog_tag_lvl_filter *ulog_tag_lvl_filter_t;
 
 struct ulog_frame
 {
