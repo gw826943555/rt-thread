@@ -1,0 +1,64 @@
+mainmenu "RT-Thread Configuration"
+
+config $BSP_DIR
+    string
+    option env="BSP_ROOT"
+    default "."
+
+config $RTT_DIR
+    string
+    option env="RTT_ROOT"
+    default: "../.."
+    
+# you can change the RTT_ROOT default: "rt-thread"
+# example : default "F:/git_repositories/rt-thread"
+
+config $PKGS_DIR
+    string
+    option env="PKGS_ROOT"
+    default "packages"
+
+source "$RTT_DIR/Kconfig"
+source "$PKGS_DIR/Kconfig"
+
+choice 
+    prompt "Device Type"
+    default GD32F107RC
+    config GD32F107RB
+        bool "GD32F107RB"
+    config GD32F107RC
+        bool "GD32F107RC"
+    config GD32F107RD
+        bool "GD32F107RD"
+    config GD32F107RE
+        bool "GD32F107RE"
+    config GD32F107RF
+        bool "GD32F107RF"
+    config GD32F107RG
+        bool "GD32F107RG"
+    config GD32F107VB
+        bool "GD32F107VB"
+    config GD32F107VC
+        bool "GD32F107VC"
+    config GD32F107VD
+        bool "GD32F107VD"
+    config GD32F107VE
+        bool "GD32F107VE"
+    config GD32F107VF
+        bool "GD32F107VF"
+    config GD32F107VG
+        bool "GD32F107VG"
+    config GD32F107ZC
+        bool "GD32F107ZC"
+    config GD32F107ZD
+        bool "GD32F107ZD"
+    config GD32F107ZE
+        bool "GD32F107ZE"
+    config GD32F107ZF
+        bool "GD32F107ZF"
+    config GD32F107ZG
+        bool "GD32F107ZG"
+endchoice
+
+source "$BSP_DIR/drivers/Kconfig"
+

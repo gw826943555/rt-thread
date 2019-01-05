@@ -1,0 +1,7 @@
+config RT_USING_PIN
+    bool "Enable PIN device for GPIO"
+    default y
+
+config RT_USING_UART0
+    bool "Enable UART0(PB6,PB7)"
+    default y

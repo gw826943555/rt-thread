@@ -1,0 +1,34 @@
+Import('RTT_ROOT')
+Import('rtconfig')
+from building import *
+
+cwd = GetCurrentDir()
+
+# add the general drivers.
+src = Split("""
+board.c
+""")
+
+CPPPATH = [cwd]
+
+# add pin drivers.
+if GetDepend('RT_USING_PIN'):
+    src += ['drv_gpio.c']
+
+# add uart drivers.
+if GetDepend('RT_USING_SERIAL'):
+    src += ['drv_usart.c']
+
+# add Ethernet drivers.
+# if GetDepend('RT_USING_LWIP'):
+#    src += ['drv_enet.c', 'synopsys_emac.c']
+
+# add spi flash drivers.
+# if GetDepend('RT_USING_SFUD'):
+#    src += ['drv_spi_flash.c', 'drv_spi.c']    
+# elif GetDepend('RT_USING_SPI'):
+#    src += ['drv_spi.c']
+
+group = DefineGroup('Drivers', src, depend = [''], CPPPATH = CPPPATH)
+
+Return('group')
