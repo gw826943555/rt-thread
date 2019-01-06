@@ -34,3 +34,10 @@ ncscope.*
 #ctag files
 tags
 
+#gd32f107 bsp
+bsp/gd32f107/Objects/*
+bsp/gd32f107/Listings/*
+bsp/gd32f107/JlinkLog.txt
+bsp/gd32f107/JlinkSettings.ini
+*.uvguix.*
+*.scvd
