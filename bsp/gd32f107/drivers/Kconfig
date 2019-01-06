@@ -5,3 +5,16 @@ config RT_USING_PIN
 config RT_USING_UART0
     bool "Enable UART0(PB6,PB7)"
     default y
+
+if RT_USING_UART0
+    choice
+        prompt "UART0 PIN"
+        default UART0_USING_PA9PA10
+        config UART0_PA9PA10
+            bool "UART0 USING PA9,PA10"
+        config UART0_USING_PB6PB7
+            bool "UART0 USING PB6,PB7"
+    endchoice
+endif
+
+

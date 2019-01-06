@@ -17,6 +17,8 @@
 #ifndef __BOARD_H__
 #define __BOARD_H__
 
+#include "rtconfig.h"
+
 // <o> Internal SRAM memory size[Kbytes] <8-96>
 //	<i>Default: 96
 #define GD32_SRAM_SIZE         96

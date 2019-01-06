@@ -53,18 +53,6 @@
 #define RT_SERIAL_RB_BUFSZ              64
 #endif
 
-#define RT_SERIAL_CONFIG_DEFAULT           \
-{                                          \
-    BAUD_RATE_115200, /* 115200 bits/s */  \
-    DATA_BITS_8,      /* 8 databits */     \
-    STOP_BITS_1,      /* 1 stopbit */      \
-    PARITY_NONE,      /* No parity  */     \
-    BIT_ORDER_LSB,    /* LSB first sent */ \
-    NRZ_NORMAL,       /* Normal mode */    \
-    RT_SERIAL_RB_BUFSZ, /* Buffer size */  \
-    0                                      \
-}
-
 #define RT_UART_DEFAULT_BAUD_RATE			BAUD_RATE_115200
 #define RT_UART_DEFAULT_DATA_BITS			DATA_BITS_8
 #define RT_UART_DEFAULT_STOP_BITS			STOP_BITS_1
