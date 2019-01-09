@@ -22,6 +22,7 @@
 // <o> Internal SRAM memory size[Kbytes] <8-96>
 //	<i>Default: 96
 #define GD32_SRAM_SIZE         96
+#define GD32_SRAM_END          (0x20000000 + GD32_SRAM_SIZE * 1024)
 #ifdef __CC_ARM
 extern int Image$$RW_IRAM1$$RW$$Base;
 extern int Image$$RW_IRAM1$$ZI$$Limit;
@@ -30,9 +31,11 @@ extern int Image$$RW_IRAM1$$ZI$$Limit;
 #elif __ICCARM__
 #pragma section="HEAP"
 #define HEAP_BEGIN    (__segment_end("HEAP"))
+#define HEAP_END      GD32_SRAM_END
 #else
 extern int __bss_end;
 #define HEAP_BEGIN    (&__bss_end)
+#define HEAP_END      GD32_SRAM_END
 #endif
 
 
