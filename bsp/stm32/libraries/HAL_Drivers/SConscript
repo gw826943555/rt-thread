@@ -38,8 +38,14 @@ if GetDepend('RT_USING_LWIP'):
 if GetDepend(['RT_USING_ADC']):
     src += Glob('drv_adc.c')
 
+if GetDepend(['RT_USING_CAN']):
+    src += ['drv_can.c']
+
 if GetDepend('BSP_USING_SDRAM'):
     src += ['drv_sdram.c']
+
+if GetDepend('BSP_USING_LCD'):
+    src += ['drv_lcd.c']
 
 if GetDepend('BSP_USING_ONCHIP_RTC'):
     src += ['drv_rtc.c']

@@ -21,14 +21,21 @@ menu "Onboard Peripheral Drivers"
         
     config BSP_USING_SDRAM
         bool "Enable SDRAM"
+        select BSP_USING_FMC
         default n
         
     config BSP_USING_SPI_FLASH
-        bool "Enable SPI FLASH (w25q256 spi5)"
+        bool "Enable SPI FLASH (W25Q128 spi5)"
         select BSP_USING_SPI
         select BSP_USING_SPI5
         select RT_USING_SFUD
         select RT_SFUD_USING_SFDP
+        default n
+
+    config BSP_USING_LCD
+        bool "Enable LCD"
+        select BSP_USING_LTDC
+        select BSP_USING_SDRAM
         default n
         
     config BSP_USING_MPU6050
@@ -197,11 +204,23 @@ menu "On-chip Peripheral Drivers"
                 default 23
         endif
 
-    config BSP_USING_ONCHIP_RTC
+    menuconfig BSP_USING_ONCHIP_RTC
         bool "Enable RTC"
         select RT_USING_RTC
         select RT_USING_LIBC
         default n
+        if BSP_USING_ONCHIP_RTC
+            choice
+                prompt "Select clock source"
+                default BSP_RTC_USING_LSE
+
+                config BSP_RTC_USING_LSE
+                    bool "RTC USING LSE"
+
+                config BSP_RTC_USING_LSI
+                    bool "RTC USING LSI"
+            endchoice
+        endif
 
     config BSP_USING_WDT
         bool "Enable Watchdog Timer"
@@ -214,6 +233,13 @@ menu "On-chip Peripheral Drivers"
         select RT_USING_DFS
         default n
 
+    config BSP_USING_FMC
+        bool
+        default n
+
+    config BSP_USING_LTDC
+        bool
+        default n
 endmenu
 
 menu "Board extended module Drivers"
