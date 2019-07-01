@@ -22,14 +22,6 @@ path = [
     cwd + '/CMSIS',
     cwd + '/GD32F10x_standard_peripheral/Include',]
     
-if GetDepend(['RT_USING_USBD']):
-    path += [cwd + '/GD32F10x_usbd_driver/Include']
-    src  += [cwd + '/GD32F10x_usbd_driver/Source']
-
-if GetDepend(['RT_USING_USBH']):
-    path += [cwd + '/GD32F10x_usbfs_driver/Include']
-    src  += [cwd + '/GD32F10x_usbfs_driver/Source']
-
 CPPDEFINES = ['USE_STDPERIPH_DRIVER', 'GD32F10X_MD']
 
 group = DefineGroup('GD32_StdPeriph', src, depend = [''], CPPPATH = path, CPPDEFINES = CPPDEFINES)
