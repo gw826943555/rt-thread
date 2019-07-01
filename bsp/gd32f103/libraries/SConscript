@@ -1,0 +1,37 @@
+import rtconfig
+from building import *
+
+# get current directory
+cwd = GetCurrentDir()
+
+# The set of source files associated with this SConscript file.
+
+src = Glob('GD32F10x_standard_peripheral/Source/*.c')
+src += [cwd + '/CMSIS/GD/GD32F10x/Source/system_gd32f10x.c']
+
+#add for startup script
+if rtconfig.CROSS_TOOL == 'gcc':
+    src += [cwd + '/CMSIS/GD/GD32F10x/Source/GCC/startup_gd32f10x_md.s']
+elif rtconfig.CROSS_TOOL == 'keil':
+    src += [cwd + '/CMSIS/GD/GD32F10x/Source/ARM/startup_gd32f10x_md.s']
+elif rtconfig.CROSS_TOOL == 'iar':
+    src += [cwd + '/CMSIS/GD/GD32F10x/Source/IAR/startup_gd32f10x_md.s']
+
+path = [
+    cwd + '/CMSIS/GD/GD32F10x/Include',
+    cwd + '/CMSIS',
+    cwd + '/GD32F10x_standard_peripheral/Include',]
+    
+if GetDepend(['RT_USING_USBD']):
+    path += [cwd + '/GD32F10x_usbd_driver/Include']
+    src  += [cwd + '/GD32F10x_usbd_driver/Source']
+
+if GetDepend(['RT_USING_USBH']):
+    path += [cwd + '/GD32F10x_usbfs_driver/Include']
+    src  += [cwd + '/GD32F10x_usbfs_driver/Source']
+
+CPPDEFINES = ['USE_STDPERIPH_DRIVER', 'GD32F10X_MD']
+
+group = DefineGroup('GD32_StdPeriph', src, depend = [''], CPPPATH = path, CPPDEFINES = CPPDEFINES)
+
+Return('group')

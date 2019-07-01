@@ -1,0 +1,35 @@
+config RT_USING_PIN
+    bool "Enable PIN device for GPIO"
+    default y
+
+config RT_USING_UART0
+    bool "Enable UART0(PB6,PB7)"
+    default y
+
+if RT_USING_UART0
+    choice
+        prompt "UART0 PIN"
+        default UART0_USING_PA9PA10
+        config UART0_PA9PA10
+            bool "UART0 USING PA9,PA10"
+        config UART0_USING_PB6PB7
+            bool "UART0 USING PB6,PB7"
+    endchoice
+endif
+
+config RT_USING_SPI0
+    bool "Using SPI0"
+    select RT_USING_SPI
+    default y 
+
+config RT_USING_SPI1
+    bool "Using SPI1"
+    select RT_USING_SPI
+    default n  
+
+config RT_USING_SPI2
+    bool "Using SPI2"
+    select RT_USING_SPI
+    default n 
+
+
