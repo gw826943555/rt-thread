@@ -39,7 +39,7 @@ OF SUCH DAMAGE.
 #ifndef USB_REGS_H
 #define USB_REGS_H
 
-#include "usb_conf.h"
+#include "gd32f10x.h"
 
 #define USBFS                     USBFS_BASE                              /*!< base address of USBFS registers */
 

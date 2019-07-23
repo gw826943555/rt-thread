@@ -17,4 +17,8 @@ if RT_USING_UART0
     endchoice
 endif
 
+config RT_USING_USBD
+	bool "Enable USB Slave Device"
+	default n
+
 

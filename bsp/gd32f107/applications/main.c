@@ -26,6 +26,20 @@
 
 int main(void)
 {
+    rt_device_t dev = RT_NULL;
+    char buf[] = "Hello World";
+    dev = rt_device_find("vcom");
+    
+    if(dev) 
+        rt_device_open(dev, RT_DEVICE_FLAG_RDWR);
+    else
+        return 0;
+    
+    while(1)
+    {
+        rt_device_write(dev, 0, buf, rt_strlen(buf));
+        rt_thread_mdelay(500);
+    }
     return 0;
 }
 

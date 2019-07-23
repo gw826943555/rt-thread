@@ -55,9 +55,9 @@ OF SUCH DAMAGE.
 //#define __SYSTEM_CLOCK_48M_PLL_HXTAL            (uint32_t)(48000000)
 //#define __SYSTEM_CLOCK_56M_PLL_HXTAL            (uint32_t)(56000000)
 //#define __SYSTEM_CLOCK_72M_PLL_HXTAL            (uint32_t)(72000000)
-//#define __SYSTEM_CLOCK_96M_PLL_HXTAL            (uint32_t)(96000000)
+#define __SYSTEM_CLOCK_96M_PLL_HXTAL            (uint32_t)(96000000)
 //#define __SYSTEM_CLOCK_108M_PLL_HXTAL           (uint32_t)(108000000)
-#define __SYSTEM_CLOCK_120M_PLL_HXTAL		      (uint32_t)(120000000)
+//#define __SYSTEM_CLOCK_120M_PLL_HXTAL		      (uint32_t)(120000000)
 //#define __SYSTEM_CLOCK_192M_PLL_HXTAL			  (uint32_t)(192000000)
 
 #define SEL_IRC8M       0x00U
