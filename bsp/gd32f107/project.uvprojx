@@ -48,14 +48,14 @@
             <NotGenerated>0</NotGenerated>
             <InvalidFlash>1</InvalidFlash>
           </TargetStatus>
-          <OutputDirectory>.\Objects\</OutputDirectory>
+          <OutputDirectory>.\build\</OutputDirectory>
           <OutputName>template</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
           <CreateHexFile>0</CreateHexFile>
           <DebugInformation>1</DebugInformation>
           <BrowseInformation>1</BrowseInformation>
-          <ListingPath>.\Listings\</ListingPath>
+          <ListingPath>.\build\</ListingPath>
           <HexFormatSelection>1</HexFormatSelection>
           <Merge32K>0</Merge32K>
           <CreateBatchFile>0</CreateBatchFile>
@@ -134,11 +134,11 @@
             <RunIndependent>0</RunIndependent>
             <UpdateFlashBeforeDebugging>1</UpdateFlashBeforeDebugging>
             <Capability>1</Capability>
-            <DriverSelection>-1</DriverSelection>
+            <DriverSelection>4096</DriverSelection>
           </Flash1>
           <bUseTDR>1</bUseTDR>
           <Flash2>BIN\UL2CM3.DLL</Flash2>
-          <Flash3></Flash3>
+          <Flash3>"" ()</Flash3>
           <Flash4></Flash4>
           <pFcarmOut></pFcarmOut>
           <pFcarmGrp></pFcarmGrp>
@@ -495,7 +495,7 @@
             <File>
               <FileName>drv_usb_poll.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\drivers\drv_usb_poll.c</FilePath>
+              <FilePath>drivers\drv_usb_poll.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -536,6 +536,11 @@
               <FileName>gd32f10x_dma.c</FileName>
               <FileType>1</FileType>
               <FilePath>libraries\GD32F10x_standard_peripheral\Source\gd32f10x_dma.c</FilePath>
+            </File>
+            <File>
+              <FileName>gd32f10x_enet.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>libraries\GD32F10x_standard_peripheral\Source\gd32f10x_enet.c</FilePath>
             </File>
             <File>
               <FileName>gd32f10x_exmc.c</FileName>
@@ -721,11 +726,6 @@
               <FileName>cdc_vcom.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\components\drivers\usb\usbdevice\class\cdc_vcom.c</FilePath>
-            </File>
-            <File>
-              <FileName>mstorage.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\drivers\usb\usbdevice\class\mstorage.c</FilePath>
             </File>
           </Files>
         </Group>

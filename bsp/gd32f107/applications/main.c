@@ -37,8 +37,8 @@ int main(void)
     
     while(1)
     {
-        rt_device_write(dev, 0, buf, rt_strlen(buf));
-        rt_thread_mdelay(500);
+//        rt_device_write(dev, 0, buf, rt_strlen(buf));
+        rt_thread_mdelay(1000);
     }
     return 0;
 }

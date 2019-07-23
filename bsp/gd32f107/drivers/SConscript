@@ -21,7 +21,7 @@ if GetDepend('RT_USING_SERIAL'):
 	
 # add usb slave device drivers
 if GetDepend('RT_USING_USBD'):
-	src += ['drv_usbd_poll.c']
+	src += ['drv_usb_poll.c']
 
 # add Ethernet drivers.
 # if GetDepend('RT_USING_LWIP'):

@@ -3,7 +3,7 @@
 #include "gd32f10x.h"
 #include "drivers/usb_common.h"
 
-#define EP_MAX_PACKET_SIZE                      64
+#define EP0_MAX_PACKET_SIZE                     64U
 
 #define RX_FIFO_FS_SIZE                         128
 #define TX0_FIFO_FS_SIZE                        64
@@ -31,7 +31,7 @@
 typedef struct
 {
     uint8_t         endp_type;                             /* USB endpoint type */
-//    uint8_t         endp_frame;                            /* USB endpoint frame */
+    uint8_t         endp_frame;                            /* USB endpoint frame */
     uint32_t        endp_mps;                              /* USB endpoint max packet size */
 
     /* Transaction level variables */

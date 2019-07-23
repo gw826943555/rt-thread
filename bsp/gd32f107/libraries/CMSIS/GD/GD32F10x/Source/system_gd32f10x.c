@@ -525,8 +525,8 @@ static void system_clock_48m_hxtal(void)
 
 #if (defined(GD32F10X_MD) || defined(GD32F10X_HD) || defined(GD32F10X_XD))
     /* select HXTAL/2 as clock source */
-    RCU_CFG0 &= ~(RCU_CFG0_PLLSEL | RCU_CFG0_PREDV0);
-    RCU_CFG0 |= (RCU_PLLSRC_HXTAL | RCU_CFG0_PREDV0);
+    RCU_CFG0 &= ~(RCU_CFG0_PLLSEL | RCU_CFG0_PREDV0 | RCU_CFG0_USBPSC);
+    RCU_CFG0 |= (RCU_PLLSRC_HXTAL | RCU_CFG0_PREDV0 | RCU_CKUSB_CKPLL_DIV1);
 
     /* CK_PLL = (CK_HXTAL/2) * 12 = 48 MHz */
     RCU_CFG0 &= ~(RCU_CFG0_PLLMF | RCU_CFG0_PLLMF_4);
@@ -534,8 +534,8 @@ static void system_clock_48m_hxtal(void)
 
 #elif defined(GD32F10X_CL)
     /* CK_PLL = (CK_PREDIV0) * 12 = 48 MHz */
-    RCU_CFG0 &= ~(RCU_CFG0_PLLMF | RCU_CFG0_PLLMF_4);
-    RCU_CFG0 |= (RCU_PLLSRC_HXTAL | RCU_PLL_MUL12);
+    RCU_CFG0 &= ~(RCU_CFG0_PLLMF | RCU_CFG0_PLLMF_4 | RCU_CFG0_USBFSPSC);
+    RCU_CFG0 |= (RCU_PLLSRC_HXTAL | RCU_PLL_MUL12 | RCU_CKUSB_CKPLL_DIV1);
 
     /* CK_PREDIV0 = (CK_HXTAL)/5 *8 /10 = 4 MHz */
     RCU_CFG1 &= ~(RCU_CFG1_PREDV0SEL | RCU_CFG1_PLL1MF | RCU_CFG1_PREDV1 | RCU_CFG1_PREDV0);
@@ -677,8 +677,8 @@ static void system_clock_72m_hxtal(void)
 
 #if (defined(GD32F10X_MD) || defined(GD32F10X_HD) || defined(GD32F10X_XD))
     /* select HXTAL/2 as clock source */
-    RCU_CFG0 &= ~(RCU_CFG0_PLLSEL | RCU_CFG0_PREDV0);
-    RCU_CFG0 |= (RCU_PLLSRC_HXTAL | RCU_CFG0_PREDV0);
+    RCU_CFG0 &= ~(RCU_CFG0_PLLSEL | RCU_CFG0_PREDV0 | RCU_CFG0_USBFSPSC);
+    RCU_CFG0 |= (RCU_PLLSRC_HXTAL | RCU_CFG0_PREDV0 | RCU_CKUSB_CKPLL_DIV1_5);
 
     /* CK_PLL = (CK_HXTAL/2) * 18 = 72 MHz */
     RCU_CFG0 &= ~(RCU_CFG0_PLLMF | RCU_CFG0_PLLMF_4);
@@ -686,8 +686,8 @@ static void system_clock_72m_hxtal(void)
 
 #elif defined(GD32F10X_CL)
     /* CK_PLL = (CK_PREDIV0) * 18 = 72 MHz */ 
-    RCU_CFG0 &= ~(RCU_CFG0_PLLMF | RCU_CFG0_PLLMF_4);
-    RCU_CFG0 |= (RCU_PLLSRC_HXTAL | RCU_PLL_MUL18);
+    RCU_CFG0 &= ~(RCU_CFG0_PLLMF | RCU_CFG0_PLLMF_4 | RCU_CFG0_USBFSPSC);
+    RCU_CFG0 |= (RCU_PLLSRC_HXTAL | RCU_PLL_MUL18 | RCU_CKUSB_CKPLL_DIV1_5);
 
     /* CK_PREDIV0 = (CK_HXTAL)/5 *8 /10 = 4 MHz */ 
     RCU_CFG1 &= ~(RCU_CFG1_PREDV0SEL | RCU_CFG1_PLL1MF | RCU_CFG1_PREDV1 | RCU_CFG1_PREDV0);
@@ -753,8 +753,8 @@ static void system_clock_96m_hxtal(void)
 
 #if (defined(GD32F10X_MD) || defined(GD32F10X_HD) || defined(GD32F10X_XD))
     /* select HXTAL/2 as clock source */
-    RCU_CFG0 &= ~(RCU_CFG0_PLLSEL | RCU_CFG0_PREDV0);
-    RCU_CFG0 |= (RCU_PLLSRC_HXTAL | RCU_CFG0_PREDV0);
+    RCU_CFG0 &= ~(RCU_CFG0_PLLSEL | RCU_CFG0_PREDV0 | RCU_CFG0_USBFSPSC);
+    RCU_CFG0 |= (RCU_PLLSRC_HXTAL | RCU_CFG0_PREDV0 | RCU_CKUSB_CKPLL_DIV2);
 
     /* CK_PLL = (CK_HXTAL/2) * 24 = 96 MHz */
     RCU_CFG0 &= ~(RCU_CFG0_PLLMF | RCU_CFG0_PLLMF_4);
@@ -762,8 +762,8 @@ static void system_clock_96m_hxtal(void)
 
 #elif defined(GD32F10X_CL)
     /* CK_PLL = (CK_PREDIV0) * 24 = 96 MHz */
-    RCU_CFG0 &= ~(RCU_CFG0_PLLMF | RCU_CFG0_PLLMF_4);
-    RCU_CFG0 |= (RCU_PLLSRC_HXTAL | RCU_PLL_MUL24);
+    RCU_CFG0 &= ~(RCU_CFG0_PLLMF | RCU_CFG0_PLLMF_4 | RCU_CFG0_USBFSPSC);
+    RCU_CFG0 |= (RCU_PLLSRC_HXTAL | RCU_PLL_MUL24 | RCU_CKUSB_CKPLL_DIV2);
 
     /* CK_PREDIV0 = (CK_HXTAL)/5 *8 /10 = 4 MHz */
     RCU_CFG1 &= ~(RCU_CFG1_PREDV0SEL | RCU_CFG1_PLL1MF | RCU_CFG1_PREDV1 | RCU_CFG1_PREDV0);
@@ -905,8 +905,8 @@ static void system_clock_120m_hxtal(void)
 
 #if (defined(GD32F10X_MD) || defined(GD32F10X_HD) || defined(GD32F10X_XD))
     /* select HXTAL/2 as clock source */
-    RCU_CFG0 &= ~(RCU_CFG0_PLLSEL | RCU_CFG0_PREDV0);
-    RCU_CFG0 |= (RCU_PLLSRC_HXTAL | RCU_CFG0_PREDV0);
+    RCU_CFG0 &= ~(RCU_CFG0_PLLSEL | RCU_CFG0_PREDV0 | RCU_CFG0_USBFSPSC);
+    RCU_CFG0 |= (RCU_PLLSRC_HXTAL | RCU_CFG0_PREDV0 | RCU_CKUSB_CKPLL_DIV2_5);
 
     /* CK_PLL = (CK_HXTAL/2) * 27 = 108 MHz */
     RCU_CFG0 &= ~(RCU_CFG0_PLLMF | RCU_CFG0_PLLMF_4);
@@ -914,8 +914,8 @@ static void system_clock_120m_hxtal(void)
 
 #elif defined(GD32F10X_CL)
     /* CK_PLL = (CK_PREDIV0) * 30 = 120 MHz */ 
-    RCU_CFG0 &= ~(RCU_CFG0_PLLMF | RCU_CFG0_PLLMF_4);
-    RCU_CFG0 |= (RCU_PLLSRC_HXTAL | RCU_PLL_MUL30);
+    RCU_CFG0 &= ~(RCU_CFG0_PLLMF | RCU_CFG0_PLLMF_4 | RCU_CFG0_USBFSPSC);
+    RCU_CFG0 |= (RCU_PLLSRC_HXTAL | RCU_PLL_MUL30 | RCU_CKUSB_CKPLL_DIV2_5);
 
     /* CK_PREDIV0 = (CK_HXTAL)/10 *8 /5 = 4 MHz */ 
     RCU_CFG1 &= ~(RCU_CFG1_PREDV0SEL | RCU_CFG1_PLL1MF | RCU_CFG1_PREDV1 | RCU_CFG1_PREDV0);
@@ -1058,8 +1058,8 @@ static void system_clock_48m_irc8m(void)
     RCU_CFG0 |= RCU_APB1_CKAHB_DIV2;
 
     /* CK_PLL = (CK_IRC8M/2) * 12 = 48 MHz */
-    RCU_CFG0 &= ~(RCU_CFG0_PLLMF | RCU_CFG0_PLLMF_4);
-    RCU_CFG0 |= RCU_PLL_MUL12;
+    RCU_CFG0 &= ~(RCU_CFG0_PLLMF | RCU_CFG0_PLLMF_4 | RCU_CFG0_USBFSPSC);
+    RCU_CFG0 |= RCU_PLL_MUL12 | RCU_CKUSB_CKPLL_DIV1;
 
     /* enable PLL */
     RCU_CTL |= RCU_CTL_PLLEN;
@@ -1114,8 +1114,8 @@ static void system_clock_72m_irc8m(void)
     RCU_CFG0 |= RCU_APB1_CKAHB_DIV2;
 
     /* CK_PLL = (CK_IRC8M/2) * 18 = 72 MHz */
-    RCU_CFG0 &= ~(RCU_CFG0_PLLMF | RCU_CFG0_PLLMF_4);
-    RCU_CFG0 |= RCU_PLL_MUL18;
+    RCU_CFG0 &= ~(RCU_CFG0_PLLMF | RCU_CFG0_PLLMF_4 | RCU_CFG0_USBFSPSC);
+    RCU_CFG0 |= RCU_PLL_MUL18 | RCU_CKUSB_CKPLL_DIV1_5;
 
     /* enable PLL */
     RCU_CTL |= RCU_CTL_PLLEN;
