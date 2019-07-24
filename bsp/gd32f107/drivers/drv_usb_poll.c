@@ -30,26 +30,30 @@ static struct ep_id _ep_pool[] =
 
 static void gd_usb_flush_txfifo(uint8_t addr)
 {
-    uint32_t fifo;
-    /* set IN endpoint NAK */
-	USB_DIEPxCTL(addr) |= DEPCTL_SNAK;
-	/* wait for core to respond */
-	while (!(USB_DIEPxINTF(addr) & DIEPINTF_IEPNE)) 
-    {
-		/* idle */
-	}
-	/* get fifo for this endpoint */
-	fifo = (USB_DIEPxCTL(addr) & DIEPCTL_TXFNUM) >> 22;
-	/* wait for core to idle */
-	;
-	/* flush tx fifo */
-	USB_GRSTCTL = (fifo << 6) | GRSTCTL_TXFF;
-	/* reset packet counter */
-	USB_DIEPxLEN(addr) = 0;
-	while ((USB_GRSTCTL & GRSTCTL_TXFF)) 
-    {
-		/* idle */
-	}
+    uint32_t count = 0U;
+
+    USB_GRSTCTL = ((uint32_t)addr << 6U) | GRSTCTL_TXFF;
+
+    /* wait for tx fifo flush bit is set */
+    do {
+        if (++count > 200000U) {
+            break;
+        }
+    } while (USB_GRSTCTL & GRSTCTL_TXFF);
+}
+
+static void gd_usb_flush_rxfifo(void)
+{
+    uint32_t count = 0U;
+
+    USB_GRSTCTL = GRSTCTL_RXFF;
+
+    /* wait for rx fifo flush bit is set */
+    do {
+        if (++count > 200000U) {
+            break;
+        }
+    } while (USB_GRSTCTL & GRSTCTL_RXFF);
 }
 
 static void gd_usb_write_fifo(gd_usb_dev *dev, uint8_t ep_num)
@@ -120,8 +124,11 @@ static void gd_usb_ep_out_handler(void)
     {
         if (endp_intr & 0x1U) 
         {
-            USB_DOEP_INTR_READ(out_endp_intr, (uint16_t)endp_num);
+//            USB_DOEP_INTR_READ(out_endp_intr, (uint16_t)endp_num);
+            out_endp_intr = USB_DOEPxINTF(endp_num);
+            USB_LOG("EP%d out handle\r\n", endp_num);
             
+            USB_LOG("USB_DOEP%dINTF:%X\r\n", endp_num, out_endp_intr);
             /* transfer complete interrupt */
             if(out_endp_intr & DOEPINTF_TF)
             {
@@ -146,7 +153,8 @@ static void gd_usb_ep_out_handler(void)
             if (out_endp_intr & DOEPINTF_STPF) 
             {
                 /* setup phase is completed */
-                rt_usbd_ep0_setup_handler(&_gd_udc, (struct urequest *)_gd_usbd.set_up);
+                USB_LOG("set up handle\r\n");
+//                rt_usbd_ep0_setup_handler(&_gd_udc, (struct urequest *)_gd_usbd.set_up);
                 USB_DOEPxINTF((uint16_t)endp_num) = DOEPINTF_STPF;
             }
             /* back to back setup packets received */
@@ -154,6 +162,8 @@ static void gd_usb_ep_out_handler(void)
             {
                 USB_DOEPxINTF((uint16_t)endp_num) = DOEPINTF_BTBSTP;
             }
+            
+            USB_LOG("USB_DOEP%dINTF:%X\r\n", endp_num, USB_DOEPxINTF(endp_num));
         }
         endp_num ++;
         endp_intr >>= 1;
@@ -254,7 +264,8 @@ static void gd_usb_recv_fifo_not_empty_handler(void)
         case RXSTAT_GOUT_NAK:
             break;
         case RXSTAT_DATA_UPDT:
-            if (bcount > 0U) {
+            if (bcount > 0U) 
+            {
                 __IO uint32_t *fifo = USB_FIFO(0U);
                 uint32_t count32b = (bcount +3U) /4U;
                 for(uint32_t index = 0; index < count32b; index++)
@@ -276,8 +287,11 @@ static void gd_usb_recv_fifo_not_empty_handler(void)
             }
             break;
         case RXSTAT_XFER_COMP:
+            USB_LOG("EP%d out done\r\n", endp_num);
             break;
         case RXSTAT_SETUP_COMP:
+            USB_LOG("setup recv done\r\n");
+            rt_usbd_ep0_setup_handler(&_gd_udc, (struct urequest *)_gd_usbd.set_up);
             break;
         case RXSTAT_SETUP_UPDT:
             *(uint32_t *)0x5000081CU |= 0x00020000U;
@@ -500,7 +514,8 @@ static rt_err_t _ep_set_stall(rt_uint8_t address)
         devepctl = USB_DIEPxCTL((uint16_t)ep_num);
 
         /* set the endpoint disable bit */
-        if (devepctl & DEPCTL_EPEN) {
+        if (devepctl & DEPCTL_EPEN) 
+        {
             devepctl |= DEPCTL_EPD;
         }
 
@@ -513,6 +528,25 @@ static rt_err_t _ep_set_stall(rt_uint8_t address)
     {
         /* set the endpoint stall bit */
         USB_DOEPxCTL((uint16_t)ep_num) |= DEPCTL_STALL;
+    }
+    
+    if((address & 0x7FU) == 0)
+    {
+        __IO uint32_t ep0len = 0U;
+
+        /* set out endpoint 0 receive length to 24 bytes */
+        ep0len &= ~DOEP0LEN_TLEN;
+        ep0len |= 8U * 3U;
+
+        /* set out endpoint 0 receive length to 1 packet */
+        ep0len &= ~DOEP0LEN_PCNT;
+        ep0len |= 1U << 19;
+
+        /* set setup packet count to 3 */
+        ep0len &= ~DOEP0LEN_STPCNT;
+        ep0len |= 3U << 29;
+
+        USB_DOEPxLEN(0U) = ep0len;
     }
     
     return RT_EOK;
@@ -773,17 +807,23 @@ static rt_size_t _ep_write(rt_uint8_t address, void *buffer, rt_size_t size)
     deveplen &= ~DEPLEN_PCNT;
 
     /* zero length packet */
-    if (0U == ep->xfer_len) {
+    if (0U == ep->xfer_len) 
+    {
         /* set transfer packet count to 1 */
         deveplen |= 1U << 19U;
-    } else {
-        if (0U == ep_num) {
-            if (ep->xfer_len > ep->endp_mps) {
+    } 
+    else 
+    {
+        if (0U == ep_num) 
+        {
+            if (ep->xfer_len > ep->endp_mps) 
+            {
                 ep->xfer_len = ep->endp_mps;
             }
 
             deveplen |= 1U << 19U;
-        } else {
+        } else 
+        {
             deveplen |= ((ep->xfer_len - 1U + ep->endp_mps) / ep->endp_mps) << 19U;
         }
 
@@ -793,7 +833,8 @@ static rt_size_t _ep_write(rt_uint8_t address, void *buffer, rt_size_t size)
          */
         deveplen |= ep->xfer_len;
 
-        if (USB_EP_ATTR_ISOC == ep->endp_type) {
+        if (USB_EP_ATTR_ISOC == ep->endp_type) 
+        {
             deveplen |= DIEPLEN_MCNT & (1U << 29U);
         }
     }
@@ -907,19 +948,26 @@ static rt_err_t _init(rt_device_t device)
     /* active the transceiver and enable vbus sensing */
     USB_GCCFG |= GCCFG_PWRON | GCCFG_VBUSACEN | GCCFG_VBUSBCEN;
     
-    /* Explicitly enable DP pullup */
-    USB_DCTL &= ~DCTL_SD;
+    /* set tx fifo empty level to half empty mode */
+    USB_GAHBCS &= ~GAHBCS_TXFTH | TXFIFO_EMPTY_HALF;
+    
+    /* Explicitly disable DP pullup */
+    USB_SOFT_DISCONNECT_ENABLE();
     
     /* Force peripheral only mode. */
-    USB_GUSBCS |= (GUSBCS_FDM | GUSBCS_UTT);
+    USB_GUSBCS &= ~GUSBCS_FHM;
+    USB_GUSBCS |= GUSBCS_FDM;
     
-    USB_GINTF = GINTF_MFIF;
+    /* restart the phy clock (maybe don't need to...) */
+    USB_PWRCLKCTL = 0U;
     
-    /* Full speed device. */
-    USB_DCFG |= DCFG_DS;
-    
-    /* Restart the PHY clock. */
-    USB_PWRCLKCTL = 0;
+    /* config periodic frmae interval to default */
+    USB_DCFG &= ~DCFG_EOPFT;
+    USB_DCFG |= FRAME_INTERVAL_80;
+   
+    /* set full speed PHY */
+    USB_DCFG &= ~DCFG_DS;
+    USB_DCFG |= USB_SPEED_INP_FULL;
     
     /* set rx fifo size */
     USB_GRFLEN &= ~GRFLEN_RXFD;
@@ -952,18 +1000,72 @@ static rt_err_t _init(rt_device_t device)
         USB_DIEPxTFLEN(i) |= ram_address;
     }
     
-    /* Unmask interrupts for TX and RX. */
-    USB_GAHBCS |= GAHBCS_GINTEN;
-    USB_GINTEN = GINTEN_ENUMFIE |
-                GINTEN_RXFNEIE  |
-                GINTEN_IEPIE |
-                GINTEN_SPIE |
-                GINTEN_WKUPIE |
-                GINTEN_OEPIE |
-                GINTEN_RSTIE;
-    USB_DAEPINTEN = 0xf000f;
-    USB_DIEPINTEN = DIEPINTEN_TFEN;
+    /* flush all tx fifos */
+    gd_usb_flush_txfifo(0x10U);
     
+    /* flush entire rx fifo */
+    gd_usb_flush_rxfifo();
+    
+    /* clear all pending device interrupts */
+    USB_DIEPINTEN = 0U;
+    USB_DOEPINTEN = 0U;
+    USB_DAEPINT = 0xFFFFFFFFU;
+    USB_DAEPINTEN = 0U;
+    
+    /* configure all in/out endpoints */
+    for (uint8_t i = 0U; i < 4; i++) 
+    {
+        if (USB_DIEPxCTL(i) & DEPCTL_EPEN) 
+        {
+            USB_DIEPxCTL(i) |= DEPCTL_EPD | DEPCTL_SNAK;
+        } 
+        else 
+        {
+            USB_DIEPxCTL(i) = 0U;
+        }
+
+        if (USB_DOEPxCTL(i) & DEPCTL_EPEN) 
+        {
+            USB_DOEPxCTL(i) |= DEPCTL_EPD | DEPCTL_SNAK;
+        } 
+        else 
+        {
+            USB_DOEPxCTL(i) = 0U;
+        }
+
+        /* set in/out endpoint transfer length to 0 */
+        USB_DIEPxLEN(i) = 0U;
+        USB_DOEPxLEN(i) = 0U;
+
+        /* clear all pending in/out endpoints interrupts */
+        USB_DIEPxINTF(i) = 0xFFU;
+        USB_DOEPxINTF(i) = 0xFFU;
+    }
+    
+    uint32_t int_mask = 0U;
+
+    /* disable all interrupts */
+    USB_GINTEN = 0U;
+
+    /* clear any pending interrupts */
+    USB_GINTF = 0xBFFFFFFFU;
+
+    /* enable the usb wakeup and suspend interrupts */
+    USB_GINTEN = GINTEN_WKUPIE | GINTEN_SPIE;
+
+    int_mask = GINTEN_RXFNEIE;
+
+    /* enable device_mode-related interrupts */
+    int_mask |= GINTEN_SPIE | GINTEN_RSTIE | GINTEN_ENUMFIE \
+               | GINTEN_IEPIE | GINTEN_OEPIE | GINTEN_SOFIE | GINTEN_ISOONCIE \
+               | GINTEN_ISOINCIE;
+    
+    USB_GINTEN &= ~int_mask;
+    USB_GINTEN |= int_mask;
+    
+    /* set device Connect */
+    USB_SOFT_DISCONNECT_DISABLE();
+
     return RT_EOK;
 }
 
