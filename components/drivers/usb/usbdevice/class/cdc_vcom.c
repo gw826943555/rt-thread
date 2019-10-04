@@ -384,6 +384,12 @@ static rt_err_t _cdc_get_line_coding(udevice_t device, ureq_t setup)
     data.bParityType = 0;
     size = setup->wLength > 7 ? 7 : setup->wLength;
 
+    rt_kprintf("get line coding:");
+    for(uint16_t index=0; index<size; index++)
+    {
+        rt_kprintf("0x%02x ", ((uint8_t *)&data)[index]);
+    }
+    rt_kprintf("\r\n");
     rt_usbd_ep0_write(device, (void*)&data, size);
 
     return RT_EOK;
@@ -393,6 +399,7 @@ static rt_err_t _cdc_set_line_coding_callback(udevice_t device, rt_size_t size)
 {
     RT_DEBUG_LOG(RT_DEBUG_USB, ("_cdc_set_line_coding_callback\n"));
 
+    rt_kprintf("set line coding done\r\n");
     dcd_ep0_send_status(device->dcd);
     
     return RT_EOK;

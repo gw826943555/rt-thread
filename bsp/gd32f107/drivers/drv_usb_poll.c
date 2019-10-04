@@ -12,6 +12,8 @@
 #define USB_LOG(...)
 #endif
 
+#define USB_INT             0
+
 static struct udcd _gd_udc;
 gd_usb_dev _gd_usbd;
 
@@ -54,6 +56,22 @@ static void gd_usb_flush_rxfifo(void)
             break;
         }
     } while (USB_GRSTCTL & GRSTCTL_RXFF);
+}
+
+void *gd_usb_fifo_read (uint8_t *dest, uint16_t len)
+{
+    uint32_t i = 0U;
+    uint32_t count32b = (len + 3U) / 4U;
+
+    __IO uint32_t *fifo = USB_FIFO(0U);
+
+    for (i = 0U; i < count32b; i++) {
+        *(__packed uint32_t *)dest = *fifo;
+        
+        dest += 4U;
+    }
+
+    return ((void *)dest);
 }
 
 static void gd_usb_write_fifo(gd_usb_dev *dev, uint8_t ep_num)
@@ -247,6 +265,9 @@ static void gd_usb_recv_fifo_not_empty_handler(void)
     endp_num = (uint8_t)(rx_status & GRSTATRP_EPNUM);
     bcount = (rx_status & GRSTATRP_BCOUNT) >> 4U;
     data_pid = (uint8_t)((rx_status & GRSTATRP_DPID) >> 15U);
+    
+    /* ensure no-DMA mode can work */
+    packet_num = USB_DOEPxLEN((uint16_t)endp_num) & DEPLEN_PCNT;
     if ((1U == endp_num) && (0U == packet_num)) 
     {
         uint32_t devepctl = USB_DOEPxCTL((uint16_t)endp_num);
@@ -266,20 +287,15 @@ static void gd_usb_recv_fifo_not_empty_handler(void)
         case RXSTAT_DATA_UPDT:
             if (bcount > 0U) 
             {
-                __IO uint32_t *fifo = USB_FIFO(0U);
-                uint32_t count32b = (bcount +3U) /4U;
-                for(uint32_t index = 0; index < count32b; index++)
-                {
-                    *(__packed uint32_t *)ep->xfer_buff = *fifo;
-                    ep->xfer_buff += 4;
-                }
+                gd_usb_fifo_read(ep->xfer_buff, (uint16_t)bcount);
+                ep->xfer_buff += bcount;
                 ep->xfer_count += bcount;
                 
 #if DRV_USB_DEBUG
                 USB_LOG("EP%d out:", endp_num);
                 for(uint32_t index=0; index<bcount; index++)
                 {
-                    USB_LOG("0x%02x ", *(uint8_t*)(ep->xfer_buff - count32b*4 + index));
+                    USB_LOG("0x%02x ", *(uint8_t*)(ep->xfer_buff - bcount + index));
                 }
                 USB_LOG("\r\n");
 #endif
@@ -294,16 +310,12 @@ static void gd_usb_recv_fifo_not_empty_handler(void)
             rt_usbd_ep0_setup_handler(&_gd_udc, (struct urequest *)_gd_usbd.set_up);
             break;
         case RXSTAT_SETUP_UPDT:
-            *(uint32_t *)0x5000081CU |= 0x00020000U;
-            if ((0U == endp_num) && (8U == bcount) && (DPID_DATA0 == data_pid)) {
+//            *(uint32_t *)0x5000081CU |= 0x00020000U;
+//            USB_DAEPINTEN |= 0x00020000U;
+            if ((0U == endp_num) && (8U == bcount) && (DPID_DATA0 == data_pid)) 
+            {
                 /* copy the setup packet received in fifo into the setup buffer in ram */
-                __IO uint32_t *fifo = USB_FIFO(0U);
-                uint8_t *dest = _gd_usbd.set_up;
-                for(uint32_t index = 0; index < 2; index++)
-                {
-                    *(__packed uint32_t *)dest = *fifo;
-                    dest += 4;
-                }
+                gd_usb_fifo_read(_gd_usbd.set_up, 8U);
                 ep->xfer_count += bcount;
                 
 #if DRV_USB_DEBUG
@@ -429,6 +441,12 @@ static void gd_usb_poll(void)
     /* Read interrupt status register. */
     uint32_t intsts = USB_GINTF;
     
+    /* there are no interrupts, avoid spurious interrupt */
+    if (!intsts) 
+    {
+        return ;
+    }
+    
     if(intsts & GINTF_OEPIF)
     {
         gd_usb_ep_out_handler();
@@ -449,6 +467,7 @@ static void gd_usb_poll(void)
     /* early suspend interrupt */
     if (intsts & GINTF_ESP) 
     {
+        USB_GINTEN &= ~GINTEN_ESPIE;
         USB_GINTF = GINTF_ESP;
     }
     
@@ -467,7 +486,7 @@ static void gd_usb_poll(void)
     /* start of frame interrupt */
     if (intsts & GINTF_SOF) 
     {
-//        rt_usbd_sof_handler(&_gd_udc);
+        rt_usbd_sof_handler(&_gd_udc);
         USB_GINTF = GINTF_SOF;
     }
     
@@ -501,6 +520,15 @@ static void gd_usb_poll(void)
         USB_GINTF |= GINTF_ISOONCIF;
     }
 }
+
+#if USB_INT
+void  USBFS_IRQHandler (void)
+{
+    rt_interrupt_enter();
+    gd_usb_poll();
+    rt_interrupt_leave();
+}
+#endif
 
 static rt_err_t _ep_set_stall(rt_uint8_t address)
 {
@@ -1065,7 +1093,13 @@ static rt_err_t _init(rt_device_t device)
     
     /* set device Connect */
     USB_SOFT_DISCONNECT_DISABLE();
-
+    
+#if USB_INT
+    nvic_irq_enable((uint8_t)USBFS_IRQn, 2U, 0U);
+    /* enable USB global interrupt */
+    USB_GLOBAL_INT_ENABLE();
+#endif
+    
     return RT_EOK;
 }
 
@@ -1080,18 +1114,80 @@ int gd_usbd_register(void)
     _gd_udc.ep_pool = _ep_pool;
     _gd_udc.ep0.id = &_ep_pool[0];
     rt_device_register((rt_device_t)&_gd_udc, "usbd", 0);
-    
+
+#if USB_INT
+    rt_usb_device_init();
+#else
     if(rt_thread_idle_sethook(gd_usb_poll) == RT_EOK)
     {
         rt_usb_device_init();
         return RT_EOK;
     }
+#endif
     
     return RT_ERROR;
 }
 INIT_DEVICE_EXPORT(gd_usbd_register);
 
+#if DRV_USB_DEBUG
+rt_bool_t str2hex(char* str, uint32_t* hex)
+{
+    if((str[0] == '0') && ((str[1] == 'x') || (str[1] == 'X')))
+    {
+        uint8_t len = rt_strlen(str) -2;
+        for(uint8_t index=0; index<len; index++)
+        {
+            uint8_t bit4 = str[index + 2];
+            
+            if((bit4 >= '0') && (bit4 <= '9'))
+            {
+                bit4 -= '0';
+            }
+            else if((bit4 >= 'A') && (bit4 <= 'F'))
+            {
+                bit4 = bit4 - 'A' + 10;
+            }
+            else if((bit4 >= 'a') && (bit4 <= 'f'))
+            {
+                bit4 = bit4 - 'a' + 10;
+            }
+            else
+            {
+                return RT_FALSE;
+            }
+            
+            *hex <<= 4;
+            *hex += bit4;
+        }
+        return RT_TRUE;
+    }
+    return RT_FALSE;
+}
 
+void usb_dump_reg(int argc, char **argu)
+{
+    if(argc != 2)
+    {
+        rt_kprintf("wrong parameter, e.g.: usb_dump_reg 0x0a1f\r\n");
+        return ;
+    }
+    else
+    {
+        uint32_t reg = 0;
+        if(str2hex(argu[1], &reg) == RT_TRUE)
+        {
+            rt_kprintf("0x%08x:", reg + USBFS_BASE);
+            rt_kprintf("0x%08x\r\n", *(uint32_t *)(reg + USBFS_BASE));
+        }
+        else
+        {
+            rt_kprintf("wrong parameter, e.g.: usb_dump_reg 0x0a1f\r\n");
+        }
+    }
+}
+
+MSH_CMD_EXPORT(usb_dump_reg, dump usb regs);
+#endif
 
 #endif
 

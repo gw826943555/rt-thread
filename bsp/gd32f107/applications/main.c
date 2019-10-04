@@ -27,7 +27,7 @@
 int main(void)
 {
     rt_device_t dev = RT_NULL;
-    char buf[] = "Hello World";
+    char buf[512] = "Hello World\r\n";
     dev = rt_device_find("vcom");
     
     if(dev) 
@@ -35,9 +35,16 @@ int main(void)
     else
         return 0;
     
+    
+    rt_size_t rx_size=0;
     while(1)
     {
-//        rt_device_write(dev, 0, buf, rt_strlen(buf));
+        rx_size = rt_device_read(dev, 0, buf, 512);
+        if(rx_size)
+        {
+            rt_device_write(dev, 0, buf, rx_size);
+            rx_size = 0;
+        }
         rt_thread_mdelay(1000);
     }
     return 0;
