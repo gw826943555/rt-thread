@@ -56,12 +56,16 @@ static void netif_is_ready(struct rt_work *work, void *parameter)
     ip_addr_t ip_addr_zero = { 0 };
     struct rt_wlan_device *wlan = parameter;
     struct lwip_prot_des *lwip_prot = (struct lwip_prot_des *)wlan->prot;
-    struct eth_device *eth_dev = &lwip_prot->eth;
+    struct eth_device *eth_dev;
     rt_base_t level;
     struct rt_wlan_buff buff;
     rt_uint32_t ip_addr[4];
     char str[IPADDR_STRLEN_MAX];
 
+    if (lwip_prot == RT_NULL)
+        return;
+
+    eth_dev = &lwip_prot->eth;
     rt_timer_stop(&lwip_prot->timer);
     if (ip_addr_cmp(&(eth_dev->netif->ip_addr), &ip_addr_zero) != 0)
     {
@@ -122,9 +126,13 @@ static void timer_callback(void *parameter)
     struct rt_workqueue *workqueue;
     struct rt_wlan_device *wlan = parameter;
     struct lwip_prot_des *lwip_prot = (struct lwip_prot_des *)wlan->prot;
-    struct rt_work *work = &lwip_prot->work;
+    struct rt_work *work;
     rt_base_t level;
 
+    if (lwip_prot == RT_NULL)
+        return;
+
+    work = &lwip_prot->work;
     workqueue = rt_wlan_get_workqueue();
     if (workqueue != RT_NULL)
     {
@@ -148,7 +156,12 @@ static void netif_set_connected(void *parameter)
 {
     struct rt_wlan_device *wlan = parameter;
     struct lwip_prot_des *lwip_prot = wlan->prot;
-    struct eth_device *eth_dev = &lwip_prot->eth;
+    struct eth_device *eth_dev;
+
+    if (lwip_prot == RT_NULL)
+        return;
+
+    eth_dev = &lwip_prot->eth;
 
     if (lwip_prot->connected_flag)
     {
@@ -168,14 +181,10 @@ static void netif_set_connected(void *parameter)
             netifapi_netif_common(eth_dev->netif, netif_set_link_up, NULL);
 #ifdef LWIP_USING_DHCPD
             {
-                char netif_name[8];
-                int i;
+                char netif_name[RT_NAME_MAX];
 
                 rt_memset(netif_name, 0, sizeof(netif_name));
-                for (i = 0; i < sizeof(eth_dev->netif->name); i++)
-                {
-                    netif_name[i] = eth_dev->netif->name[i];
-                }
+                rt_memcpy(netif_name, eth_dev->netif->name, sizeof(eth_dev->netif->name));
                 dhcpd_start(netif_name);
             }
 #endif
@@ -183,24 +192,24 @@ static void netif_set_connected(void *parameter)
     }
     else
     {
-        if (wlan->mode == RT_WLAN_STATION)
-        {
-            LOG_D("F:%s L:%d dhcp stop run", __FUNCTION__, __LINE__);
-            netifapi_netif_common(eth_dev->netif, netif_set_link_down, NULL);
+        LOG_D("F:%s L:%d set linkdown", __FUNCTION__, __LINE__);
+        netifapi_netif_common(eth_dev->netif, netif_set_link_down, NULL);
+        rt_timer_stop(&lwip_prot->timer);
 #ifdef RT_LWIP_DHCP
-            {
-                ip_addr_t ip_addr = { 0 };
-                dhcp_stop(eth_dev->netif);
-                netif_set_addr(eth_dev->netif, &ip_addr, &ip_addr, &ip_addr);
-            }
-#endif
-            rt_timer_stop(&lwip_prot->timer);
-        }
-        else if (wlan->mode == RT_WLAN_AP)
         {
-            LOG_D("F:%s L:%d dhcpd stop run", __FUNCTION__, __LINE__);
-            netifapi_netif_common(eth_dev->netif, netif_set_link_down, NULL);
+            ip_addr_t ip_addr = { 0 };
+            dhcp_stop(eth_dev->netif);
+            netif_set_addr(eth_dev->netif, &ip_addr, &ip_addr, &ip_addr);
         }
+#endif
+#ifdef LWIP_USING_DHCPD
+        {
+            char netif_name[RT_NAME_MAX];
+            rt_memset(netif_name, 0, sizeof(netif_name));
+            rt_memcpy(netif_name, lwip_prot->eth.netif->name, sizeof(lwip_prot->eth.netif->name));
+            dhcpd_stop(netif_name);
+        }
+#endif
     }
 }
 
@@ -208,6 +217,9 @@ static void rt_wlan_lwip_event_handle(struct rt_wlan_prot *port, struct rt_wlan_
 {
     struct lwip_prot_des *lwip_prot = (struct lwip_prot_des *)wlan->prot;
     rt_bool_t flag_old;
+
+    if (lwip_prot == RT_NULL)
+        return;
 
     flag_old = lwip_prot->connected_flag;
 
@@ -405,7 +417,7 @@ const static struct rt_device_ops wlan_lwip_ops =
 static struct rt_wlan_prot *rt_wlan_lwip_protocol_register(struct rt_wlan_prot *prot, struct rt_wlan_device *wlan)
 {
     struct eth_device *eth = RT_NULL;
-    static rt_uint8_t id = 0;
+    rt_uint8_t id = 0;
     char eth_name[4], timer_name[16];
     rt_device_t device = RT_NULL;
     struct lwip_prot_des *lwip_prot;
@@ -472,12 +484,9 @@ static struct rt_wlan_prot *rt_wlan_lwip_protocol_register(struct rt_wlan_prot *
         return RT_NULL;
     }
     rt_memcpy(&lwip_prot->prot, prot, sizeof(struct rt_wlan_prot));
-    if (wlan->mode == RT_WLAN_STATION)
-    {
-        rt_sprintf(timer_name, "timer_%s", eth_name);
-        rt_timer_init(&lwip_prot->timer, timer_name, timer_callback, wlan, rt_tick_from_millisecond(1000),
-                      RT_TIMER_FLAG_SOFT_TIMER | RT_TIMER_FLAG_ONE_SHOT);
-    }
+    rt_sprintf(timer_name, "timer_%s", eth_name);
+    rt_timer_init(&lwip_prot->timer, timer_name, timer_callback, wlan, rt_tick_from_millisecond(1000),
+                    RT_TIMER_FLAG_SOFT_TIMER | RT_TIMER_FLAG_ONE_SHOT);
     netif_set_up(eth->netif);
     LOG_I("eth device init ok name:%s", eth_name);
 #ifdef RT_USING_NETDEV
@@ -488,8 +497,30 @@ static struct rt_wlan_prot *rt_wlan_lwip_protocol_register(struct rt_wlan_prot *
 
 static void rt_wlan_lwip_protocol_unregister(struct rt_wlan_prot *prot, struct rt_wlan_device *wlan)
 {
-    /*TODO*/
+    struct lwip_prot_des *lwip_prot = (struct lwip_prot_des *)prot;
+
     LOG_D("F:%s L:%d is run wlan:0x%08x", __FUNCTION__, __LINE__, wlan);
+#if !defined(RT_USING_LWIP141)
+    wlan->prot = RT_NULL;
+    if (lwip_prot == RT_NULL)
+    {
+        return;
+    }
+
+#ifdef LWIP_USING_DHCPD
+    {
+        char netif_name[RT_NAME_MAX];
+        rt_memset(netif_name, 0, sizeof(netif_name));
+        rt_memcpy(netif_name, lwip_prot->eth.netif->name, sizeof(lwip_prot->eth.netif->name));
+        dhcpd_stop(netif_name);
+    }
+#endif
+    eth_device_deinit(&lwip_prot->eth);
+    rt_device_close((rt_device_t)wlan);
+    rt_timer_detach(&lwip_prot->timer);
+    wlan->netdev = RT_NULL;
+    rt_free(lwip_prot);
+#endif
 }
 
 static struct rt_wlan_prot_ops ops =

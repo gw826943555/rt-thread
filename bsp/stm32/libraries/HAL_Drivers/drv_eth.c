@@ -102,7 +102,6 @@ static rt_err_t rt_stm32_eth_init(rt_device_t dev)
     if (HAL_ETH_Init(&EthHandle) != HAL_OK)
     {
         LOG_E("eth hardware init failed");
-        return -RT_ERROR;
     }
     else
     {
@@ -586,7 +585,7 @@ static int rt_hw_stm32_eth_init(void)
     }
 
     Tx_Buff = (rt_uint8_t *)rt_calloc(ETH_TXBUFNB, ETH_MAX_PACKET_SIZE);
-    if (Rx_Buff == RT_NULL)
+    if (Tx_Buff == RT_NULL)
     {
         LOG_E("No memory");
         state = -RT_ENOMEM;

@@ -322,6 +322,14 @@ static rt_err_t stm32_hw_pwm_init(struct stm32_pwm *device)
 #if defined(SOC_SERIES_STM32F1) || defined(SOC_SERIES_STM32L4)
     tim->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
 #endif
+
+    if (HAL_TIM_PWM_Init(tim) != HAL_OK)
+    {
+        LOG_E("%s pwm init failed", device->name);
+        result = -RT_ERROR;
+        goto __exit;
+    }
+
     if (HAL_TIM_Base_Init(tim) != HAL_OK)
     {
         LOG_E("%s time base init failed", device->name);
@@ -333,13 +341,6 @@ static rt_err_t stm32_hw_pwm_init(struct stm32_pwm *device)
     if (HAL_TIM_ConfigClockSource(tim, &clock_config) != HAL_OK)
     {
         LOG_E("%s clock init failed", device->name);
-        result = -RT_ERROR;
-        goto __exit;
-    }
-
-    if (HAL_TIM_PWM_Init(tim) != HAL_OK)
-    {
-        LOG_E("%s pwm init failed", device->name);
         result = -RT_ERROR;
         goto __exit;
     }
@@ -519,6 +520,12 @@ static void pwm_get_channel(void)
 #ifdef BSP_USING_PWM9_CH4
     stm32_pwm_obj[PWM9_INDEX].channel |= 1 << 3;
 #endif
+#ifdef BSP_USING_PWM12_CH1
+    stm32_pwm_obj[PWM12_INDEX].channel |= 1 << 0;
+#endif
+#ifdef BSP_USING_PWM12_CH2
+    stm32_pwm_obj[PWM12_INDEX].channel |= 1 << 1;
+#endif
 }
 
 static int stm32_pwm_init(void)
@@ -542,7 +549,7 @@ static int stm32_pwm_init(void)
             LOG_D("%s init success", stm32_pwm_obj[i].name);
 
             /* register pwm device */
-            if (rt_device_pwm_register(rt_calloc(1, sizeof(struct rt_device_pwm)), stm32_pwm_obj[i].name, &drv_ops, &stm32_pwm_obj[i].tim_handle) == RT_EOK)
+            if (rt_device_pwm_register(&stm32_pwm_obj[i].pwm_device, stm32_pwm_obj[i].name, &drv_ops, &stm32_pwm_obj[i].tim_handle) == RT_EOK)
             {
 
                 LOG_D("%s register success", stm32_pwm_obj[i].name);

@@ -262,6 +262,12 @@ void lwip_netdev_netstat(struct netdev *netif)
 #endif /* RT_LWIP_TCP || RT_LWIP_UDP */
 #endif /* RT_USING_FINSH */
 
+static int lwip_netdev_set_default(struct netdev *netif)
+{
+    netif_set_default((struct netif *)netif->user_data);
+    return ERR_OK;
+}
+
 const struct netdev_ops lwip_netdev_ops =
 {
     lwip_netdev_set_up,
@@ -291,6 +297,8 @@ const struct netdev_ops lwip_netdev_ops =
     lwip_netdev_netstat,
 #endif /* RT_LWIP_TCP || RT_LWIP_UDP */
 #endif /* RT_USING_FINSH */
+
+    lwip_netdev_set_default,
 };
 
 static int netdev_add(struct netif *lwip_netif)
@@ -332,6 +340,19 @@ static int netdev_add(struct netif *lwip_netif)
 #endif
 
     return result;
+}
+
+static void netdev_del(struct netif *lwip_netif)
+{
+    char name[LWIP_NETIF_NAME_LEN + 1];
+    struct netdev *netdev;
+
+    RT_ASSERT(lwip_netif);
+
+    rt_strncpy(name, lwip_netif->name, LWIP_NETIF_NAME_LEN);
+    netdev = netdev_get_by_name(name);
+    netdev_unregister(netdev);
+    rt_free(netdev);
 }
 
 /* synchronize lwIP network interface device and network interface device flags */
@@ -541,6 +562,25 @@ rt_err_t eth_device_init(struct eth_device * dev, const char *name)
 #endif
 
     return eth_device_init_with_flag(dev, name, flags);
+}
+
+void eth_device_deinit(struct eth_device *dev)
+{
+    struct netif* netif = dev->netif;
+
+#if LWIP_DHCP
+    dhcp_stop(netif);
+    dhcp_cleanup(netif);
+#endif
+    netif_set_down(netif);
+    netif_remove(netif);
+#ifdef RT_USING_NETDEV
+    netdev_del(netif);
+#endif
+    rt_device_close(&(dev->parent));
+    rt_device_unregister(&(dev->parent));
+    rt_sem_detach(&(dev->tx_ack));
+    rt_free(netif);
 }
 
 #ifndef LWIP_NO_RX_THREAD

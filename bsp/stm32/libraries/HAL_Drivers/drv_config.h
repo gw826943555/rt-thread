@@ -33,6 +33,8 @@ extern "C" {
 #include "f1/tim_config.h"
 #include "f1/sdio_config.h"
 #include "f1/pwm_config.h"
+#include "f1/usbd_fs_config.h"
+#include "f1/pulse_encoder_config.h"
 #elif  defined(SOC_SERIES_STM32F2)
 #include "f2/dma_config.h"
 #include "f2/uart_config.h"
@@ -51,6 +53,7 @@ extern "C" {
 #include "f4/tim_config.h"
 #include "f4/sdio_config.h"
 #include "f4/pwm_config.h"
+#include "f4/pulse_encoder_config.h"
 #elif  defined(SOC_SERIES_STM32F7)
 #include "f7/dma_config.h"
 #include "f7/uart_config.h"
@@ -80,6 +83,17 @@ extern "C" {
 #include "g0/adc_config.h"
 #include "g0/tim_config.h"
 #include "g0/pwm_config.h"
+#elif  defined(SOC_SERIES_STM32G4)
+#include "g4/dma_config.h"
+#include "g4/uart_config.h"
+#include "g4/spi_config.h"
+#include "g4/qspi_config.h"
+#include "g4/usbd_fs_config.h"
+#include "g4/adc_config.h"
+#include "g4/tim_config.h"
+#include "g4/sdio_config.h"
+#include "g4/pwm_config.h"
+#include "g4/pulse_encoder_config.h"
 #elif  defined(SOC_SERIES_STM32H7)
 #include "h7/dma_config.h"
 #include "h7/uart_config.h"
